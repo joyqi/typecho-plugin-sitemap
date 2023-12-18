@@ -59,7 +59,7 @@ jobs:
       - name: Zip Plugin
         id: zip-plugin
         run: |
-          sed -i "s/%version%/${{ github.event.release.tag_name }}/g" ./plugin/Plugin.php
+          sed -i "s/%version%/${{ steps.extract-version.outputs.version }}/g" ./plugin/Plugin.php
           cp -r plugin ${{ steps.plugin-name.outputs.plugin_name }}
           zip -r ${{ steps.plugin-name.outputs.plugin_name }}-${{ steps.extract-version.outputs.version }}.zip ${{ steps.plugin-name.outputs.plugin_name }}
           echo plugin_zip=${{ steps.plugin-name.outputs.plugin_name }}-${{ steps.extract-version.outputs.version }}.zip >> $GITHUB_OUTPUT
