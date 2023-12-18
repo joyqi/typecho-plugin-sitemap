@@ -1,0 +1,75 @@
+name: Release Plugin
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Get Plugin Name
+        id: plugin-name
+        run: |
+          php -r '
+          $tokens = token_get_all(file_get_contents("./plugin/Plugin.php"));
+          $announced = false;
+          $namespace = "";
+          foreach ($tokens as $token) {
+            if (!is_array($token)) {
+                continue;
+            }
+            if (!$announced && $token[0] === T_NAMESPACE) {
+                $announced = true;
+                continue;
+            } elseif ($announced && $token[0] === T_NAME_QUALIFIED) {
+                $namespace = $token[1];
+                break;
+            }
+          }
+          if (empty($namespace)) {
+            echo "Cannot find namespace in Plugin.php";
+            exit(1);
+          }
+          $names = explode("\\", $namespace);
+          echo "plugin_name=" . array_pop($names);
+          ' >> $GITHUB_OUTPUT
+
+      - name: Extract version number
+        id: extract-version
+        run: |
+          php -r '
+          $tag = "${{ github.event.release.tag_name }}";
+          if (preg_match("/^v?((?:\d+\.)*\d+)$/", $tag, $matches)) {
+            echo "version=" . $matches[1];
+          } else {
+            echo "Cannot extract version number from tag";
+            exit(1);
+          }' >> $GITHUB_OUTPUT
+
+      - name: Zip Plugin
+        id: zip-plugin
+        run: |
+          sed -i "s/%version%/${{ github.event.release.tag_name }}/g" ./plugin/Plugin.php
+          cp -r plugin ${{ steps.plugin-name.outputs.plugin_name }}
+          zip -r ${{ steps.plugin-name.outputs.plugin_name }}-${{ steps.extract-version.outputs.version }}.zip ${{ steps.plugin-name.outputs.plugin_name }}
+          echo plugin_zip=${{ steps.plugin-name.outputs.plugin_name }}-${{ steps.extract-version.outputs.version }}.zip >> $GITHUB_OUTPUT
+
+      - name: Upload Plugin To Releases
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ steps.zip-plugin.outputs.plugin_zip }}
+          asset_name: ${{ steps.zip-plugin.outputs.plugin_zip }}
+          asset_content_type: application/zip
