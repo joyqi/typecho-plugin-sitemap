@@ -11,14 +11,14 @@ if (!defined('__TYPECHO_ROOT_DIR__')) {
 }
 
 /**
- * Sitemap Plugin. Generate sitemap.xml for search engine.
- * The url of sitemap.xml is http(s)://yourdomain.com/sitemap.xml
+ * 自动生成 Typecho 站点地图的插件。
+ * 站点地图 Sitemap 的地址是：http(s)://yourdomain.com/sitemap.xml
  *
- * @package Sitemap
- * @author JoyQi
+ * @package 站点地图插件
+ * @author joyqi
  * @version %version%
  * @since 1.2.1
- * @link https://joyqi.com/typecho/plugin-sitemap.html
+ * @link https://github.com/joyqi/typecho-plugin-sitemap
  */
 class Plugin implements PluginInterface
 {
